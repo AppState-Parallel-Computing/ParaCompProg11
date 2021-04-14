@@ -41,7 +41,8 @@ int main(int argc, char * argv[])
    checkArgs(filename, width, height, magnify); 
 
    //create array that is large enough to hold the mandelbrot image
-   image = (unsigned char *) malloc(width * height * CHANNELS * sizeof(unsigned char));
+   //CHANNELS is the number of bytes per pixel
+   image = new unsigned char[width * height * CHANNELS];
 
    std::cout << "Generating an image of size " << width << " by " << height
              << " from the Mandelbrot set\n";
@@ -57,6 +58,7 @@ int main(int argc, char * argv[])
 
    //write the image to a file
    writeJPGImage(filename.c_str(), image, width, height);
+   delete[] image;
 }
 
 /*
