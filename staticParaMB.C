@@ -166,9 +166,9 @@ void putPixel(unsigned char * image, int width, int height,
    //get the red, green, blue byte values for the pixel
    getColor(color, red, green, blue); 
    //flatten the x and y coordinates to get the index
-   image[y * width * 3 + x * 3] = red;
-   image[y * width * 3 + x * 3 + 1] = green;
-   image[y * width * 3 + x * 3 + 2] = blue;
+   image[y * width * CHANNELS + x * CHANNELS] = red;
+   image[y * width * CHANNELS + x * CHANNELS + 1] = green;
+   image[y * width * CHANNELS + x * CHANNELS + 2] = blue;
 }
 
 /*

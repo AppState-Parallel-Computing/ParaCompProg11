@@ -194,9 +194,9 @@ void putPixel(unsigned char * image, int width, int height,
    getColor(color, red, green, blue); 
 
    //flatten the x and y coordinates to get the index
-   image[y * width * 3 + x * 3] = red;
-   image[y * width * 3 + x * 3 + 1] = green;
-   image[y * width * 3 + x * 3 + 2] = blue;
+   image[y * width * CHANNELS + x * CHANNELS] = red;
+   image[y * width * CHANNELS + x * CHANNELS + 1] = green;
+   image[y * width * CHANNELS + x * CHANNELS + 2] = blue;
 }
 
 /*
@@ -342,19 +342,6 @@ void printUsage()
 void writeJPGImage(const char * filename, unsigned char * Pout,
                    int width, int height)
 {
-/*
-   printf("Writing image of size %d by %d to %s\n", width, height, filename);
-
-   for (int i = 0; i < height; i++)
-   {
-      for (int j = 0; j < width; j++)
-      {
-         int idx = i * width * 3 + j * 3;
-         printf("%x%x%x ", Pout[idx], Pout[idx + 1], Pout[idx + 2]);
-      }
-      printf("\n");
-   }
-*/
    struct jpeg_compress_struct cinfo;
    struct jpeg_error_mgr jerr;
    JSAMPROW rowPointer[1];
