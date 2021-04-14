@@ -75,7 +75,7 @@ int main(int argc, char * argv[])
  * Takes as input the width and height of the image to be generated and
  * generates an image based upon the Mandelbrot set. 
  * The Mandelbrot set is the set of complex numbers c for which the function 
- * fc(z) = z2 + c does not diverge when iterated from z = 0, i.e, for which 
+ * fc(z) = z*z + c does not diverge when iterated from z = 0, i.e, for which 
  * the sequence fc(0), fc(fc(0)) etc, remains bounded in absolute value.
  * 
  * Inputs: 
