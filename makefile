@@ -1,5 +1,5 @@
 MPICXX = mpic++
-MPICXXFLAGS = -O2 -g -c -Wall
+MPICXXFLAGS = -O2 -g -c -Wall -Wno-unused-variable -Wno-unused
 .C.o:
 	$(MPICXX) $(MPICXXFLAGS) $< -o $@
 

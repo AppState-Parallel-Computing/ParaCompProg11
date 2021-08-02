@@ -18,6 +18,26 @@ mpirun -np <p> ./dynamicParaMB -w <width> -h <height> -o <output file> [-r <numR
 #define MAXITER 100  //maximum number of iterations to check for convergence
 #define RED 1
 
+/* This struct definition and directType are used to tell a process what rows 
+   it will work on or whether it should quit. */
+typedef struct
+{
+   int startRow;
+   int numRows;
+   bool quit;
+} directionsT;
+
+MPI::Datatype directType;
+
+/* This struct is used by process 0 to keep track of what rows a process is working on. */
+/* You will create an array of these. */
+typedef struct
+{
+   int startRow;
+   int numRows;
+} workT;
+
+
 /* prototypes for functions in this file */
 static void writeJPGImage(const char *, unsigned char *, int, int);
 static void mandelbrot(unsigned char * image, int width, int height, float magnify);
@@ -35,7 +55,10 @@ int main(int argc, char * argv[])
    std::string filename;
    int height = 0, width = 0, numRows = 10;
    float magnify = 1.0;
-   unsigned char * imageAll = NULL; 
+   unsigned char * imageAll = NULL;  //pointer to space for the entire image
+   unsigned char * imagePart = NULL; //pointer to space part of the image
+   workT * work = NULL;  //pointer to space for keeping track of what rows a process is
+                         //working on
   
    MPI::Init();
    int myId = MPI::COMM_WORLD.Get_rank();
@@ -46,7 +69,20 @@ int main(int argc, char * argv[])
    parseArgs(argc, argv, filename, width, height, magnify, numRows); 
    checkArgs(filename, width, height, magnify, numRows); 
 
-   /* TO DO: allocate the needed memory */
+   // TO DO: allocate the needed memory 
+   // Process 0 will need to dynamically allocate space for the entire image 
+   // (height rows, width columns, CHANNELS bytes per pixel). Initialize
+   // imageAll to point to this dynamically allocated data.
+   // Process 0 will need to dynamically allocate space for an array of numP workT elements.
+   // (See definition of workT at top of file.) Initialize work to point to this
+   // dynamically allocated data.
+   // All processes will need space for numRows of the image (numRows is initialized by
+   // parseArgs). Initialize imagePart to point to thiis dynamically allocated data.
+
+   // TO DO: define an MPI type
+   // Define an MPI struct type (called directType) that consists of two ints and a bool
+   // The type is declared at the top of this file, but you need to initialize it here
+   // using Create_struct.
 
    if (myId == 0)
    {
@@ -56,31 +92,42 @@ int main(int argc, char * argv[])
    
    double start = MPI::Wtime();
 
-   /* TO DO: For this implementation you will do a dynamic distribution.
+   /* TO DO Process 0: 
 
       Process 0 will start by sending to every other process a message
-      indicating which rows need to be handled by that process, for example,
-      by indicating the starting and ending rows.
-
-      After that, Process 0 will Recv the pixels from a process 
-      using (MPI_ANY_SOURCE) for the source: 
+      indicating which rows need to be handled by that process.
+      Declare a directionsT variable and initialize those fields and
+      use directType in the Send. The work array needs to be 
+      used to keep track of what each process is working on (starting row,
+      number of rows).
+  
+      After that for loop, Process 0 will loop until it has received all rows.
+      1) Execute a Recv using MPI_ANY_SOURCE for the source:
       MPI::Status status; //passed to Recv to be able to get source of Recv
       MPI::COMM_WORLD.Recv(imagePart, numRows * width * CHANNELS, MPI::CHAR, 
                            MPI_ANY_SOURCE, 0, status);
       int srcRank = status.Get_source(); //get source of Recv
-
-      If there is more work to do, Process 0 will send a message to the 
+      2) If there is more work to do, Process 0 will send a message to the 
       process telling it the work to do.
+      3) Copy the rows received into the correct place in the destination (imageAll).
+      The srcRank identifies the process. It is used to index into the work
+      array in order to determine which rows of the image have been received.
 
-      After there is no more work to do, Process 0 will send a message to all
-      other processes that indicates they need to quit.
+      After there is no more work to do, Process 0 will loop sending a message to 
+      all other processes that indicates they need to quit.
+   */
 
+   /* TO DO Process not equal to 0:
 
-      Processes that are not Process 0 will Recv a message from Process 0.
-      That message either says to quit or to calculate the pixels for 
-      some subset of the rows of the image. If it isn't a quit message then
-      the process will calculate the pixel values and Send them back.
+      Processes that are not Process 0 will loop until done.
+      1) Recv a message from Process 0 using the MPI type that was created (directType).
+      2) If message is not quit, calculate the pixels by calling mandelbrot for some 
+         subset of the rows of the image (as indicated in the message) and send to 
+         Process 0.
+      3) If message says quit then leave loop
+    */
 
+   /*
       You should divide this work across multiple functions and not put all of
       it in the main. (Clean code!)
    */
@@ -118,11 +165,14 @@ void mandelbrot(unsigned char * image, int width, int height, float magnify)
    int iteration,hx,hy, color;
 
    /* TO DO: This is the sequential mandelbrot.  You need to modify it
-      so that each process calculates 1/numP of the rows of pixels
+      so that a process calculates its specified rows. For example,
+      you should modify the function so that it takes startRow and numRows
+      in addition to the other parameters.  You may also one to define 
+      some more variables.
     */
 
    //for each pixel in the image
-   for (hy = 1; hy <= height; hy++)
+   for (hy = 1; hy <= height; hy++)   //TO DO: THIS NEEDS TO CHANGE
    {
       for (hx = 1; hx <= width; hx++)
       {
@@ -142,7 +192,7 @@ void mandelbrot(unsigned char * image, int width, int height, float magnify)
             }
          }
          //set the appropriate pixel in the destination image
-         putPixel(image, width, height, hx-1, hy-1, color);
+         putPixel(image, width, height, hx-1, hy-1, color);  //TO DO: THIS NEEDS TO CHANGE
       }
    }
 }

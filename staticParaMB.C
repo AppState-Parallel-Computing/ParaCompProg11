@@ -33,8 +33,9 @@ int main(int argc, char * argv[])
    std::string filename;
    int height = 0, width = 0;
    float magnify = 1.0;
-   unsigned char * imageAll = NULL; 
-  
+   unsigned char * imageAll = NULL;   //used by P0 to contain all pixels of the image
+   unsigned char * imagePart = NULL;  //used by each process to hold a subset of the image rows
+
    MPI::Init();
    int myId = MPI::COMM_WORLD.Get_rank();
    int numP = MPI::COMM_WORLD.Get_size();
@@ -49,12 +50,19 @@ int main(int argc, char * argv[])
                  << " from the Mandelbrot set\n";
    }
 
-   /* TO DO: Add code here to create the arrays you need */
+   // TO DO: Add code here to create the arrays you need. 
+   // 1) Process 0 will need to dynamically allocate space to hold the entire image. The image consists 
+   // of height rows. Each row is width pixels. Each pixel is CHANNELS bytes. Initialize imageAll  
+   // to point to the dynamically allocated data.
+   // 2) All processes need to dynamically allocate space to hold height/numP rows of the image. 
+   // Each row has width pixels. Each pixel is CHANNELS bytes. Initialize imagePart variable to point
+   // to the dynamically allocated data.
 
    double start = MPI::Wtime();
 
-   /* TO DO: Call mandelbrot and collect the results on process 0 */
-
+   // TO DO: Call mandelbrot and collect the results on process 0. 
+   // 1) Each process calls mandelbrot.
+   // 2) Each process calls Gather to gather the results on process 0
 
    double stop = MPI::Wtime();
   
@@ -91,10 +99,12 @@ void mandelbrot(unsigned char * image, int width, int height, float magnify)
 
    /* TO DO: This is the sequential mandelbrot.  You need to modify it
       so that each process calculates 1/numP of the rows of pixels
+      There are two places below that need to be se changed.  You probably
+      also want to define some local variables.
     */
    
    //for each pixel in the image
-   for (hy = 1; hy <= height; hy++)
+   for (hy = 1; hy <= height; hy++)   //TO DO: This needs to change.
    {  
       for (hx = 1; hx <= width; hx++)
       {  
@@ -114,7 +124,7 @@ void mandelbrot(unsigned char * image, int width, int height, float magnify)
             }
          }
          //set the appropriate pixel in the destination image
-         putPixel(image, width, height, hx-1, hy-1, color);
+         putPixel(image, width, height, hx-1, hy-1, color);  //TO DO: This needs to change.
       }
    }
 }
